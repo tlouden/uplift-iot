@@ -1,0 +1,54 @@
+- id: '1630768917312'
+  alias: Stand Up
+  description: Reminder to stand up while at desk
+  trigger:
+  - platform: state
+    entity_id: sensor.uplift_user_state
+    to: Sitting
+    for:
+      hours: 0
+      minutes: 40
+      seconds: 0
+      milliseconds: 0
+  condition: []
+  action:
+  - service: esphome.uplift_iot_uplift_beep_short
+  - delay:
+      hours: 0
+      minutes: 1
+      seconds: 0
+      milliseconds: 0
+  - condition: state
+    entity_id: sensor.uplift_user_state
+    state: Sitting
+  - service: notify.mobile_app_pixel_3
+    data:
+      title: UPLIFT Reminder
+      message: Time to stand up
+  - delay:
+      hours: 0
+      minutes: 4
+      seconds: 0
+      milliseconds: 0
+  - condition: state
+    entity_id: sensor.uplift_user_state
+    state: Sitting
+  - service: esphome.uplift_iot_uplift_beep_long
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
+      milliseconds: 0
+  - condition: state
+    entity_id: sensor.uplift_user_state
+    state: Sitting
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: 0
+  - service: notify.mobile_app_pixel_3
+    data:
+      title: UPLIFT Reminder
+      message: Took too long to stand up
+  mode: single

@@ -1,0 +1,119 @@
+substitutions:
+  devicename: uplift-iot
+  upper_devicename: UPLiftIoT
+
+esphome:
+  name: $devicename
+  platform: ESP32
+  board: esp32doit-devkit-v1
+  includes:
+  - uplift_uart.h
+
+# Enable logging
+logger:
+  hardware_uart: UART0
+
+# Enable Home Assistant API
+api:
+  services:
+    - service: uplift_beep_short
+      then:
+        - rtttl.play: 'three:d=4,o=5,b=240:16a,16p,16a,16p,16a'
+        - delay: 2s
+        - rtttl.play: 'three:d=4,o=5,b=240:16a,16p,16a,16p,16a'
+    - service: uplift_beep_long
+      then:
+        - while:
+            condition:
+              and:
+                - text_sensor.state:
+                    id: full_state
+                    state: 'Sitting'
+                - lambda: 'return (id(tmp_int) < 15);'
+            then:
+              - rtttl.play: 'three:d=4,o=5,b=240:16a,16p,16a,16p,16a'
+              - lambda: 'id(tmp_int)++;'
+              - delay: 2s
+        - lambda: 'id(tmp_int)=0;'
+        
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret esp_wifi_ssid
+  password: !secret esp_wifi_key
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: $upper_devicename
+    password: !secret esp_captive_key
+
+captive_portal:
+
+globals:
+   - id: tmp_int
+     type: int
+     restore_value: no
+     initial_value: '0'
+
+uart:
+  id: uplift
+  tx_pin: GPIO17
+  rx_pin: GPIO16
+  baud_rate: 9600
+
+output:
+  - platform: ledc
+    pin: GPIO15
+    id: rtttl_out
+
+rtttl:
+  output: rtttl_out
+  
+text_sensor:
+  - platform: homeassistant
+    id: room_presence
+    entity_id: sensor.tim_phone_room_presence
+    internal: true
+    on_value:
+      then:
+        - component.update: full_state
+  - platform: template
+    id: full_state
+    name: "UPLIFT User State"
+    update_interval: 60s
+    lambda: |-
+      if (id(room_presence).state != "Office") {
+        return {"Away"};
+      } else if (id(uplift_standing).state) {
+        return {"Standing"};
+      } else {
+        return {"Sitting"};
+      }
+    
+sensor:
+  - platform: custom
+    lambda: |-
+      auto my_custom_sensor = new UartUpliftSensor(id(uplift));
+      App.register_component(my_custom_sensor);
+      return {my_custom_sensor};
+    sensors:
+      id: "uplift_height"
+      name: "UPLIFT Height"
+      unit_of_measurement: '"'
+      accuracy_decimals: 1
+
+binary_sensor:
+  - platform: template
+    name: "UPLIFT Standing"
+    id: "uplift_standing"
+    lambda: |-
+      if (id(uplift_height).state >= 36) {
+        return true;
+      } else {
+        return false;
+      }
+    on_state:
+      then:
+        - component.update: full_state
