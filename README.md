@@ -1,8 +1,8 @@
 # UPLIFT-IoT
-Connecting an [UPLIFT](https://www.upliftdesk.com/) desk to Home Assistant using and ESP32 with ESP Home for Home Assistant.
+Connecting an [UPLIFT](https://www.upliftdesk.com/) desk to Home Assistant using an ESP32 with ESP Home for Home Assistant.
 
 ## Disclaimer
-This is an adersarial interop against a hardware interface. Any changes from the manufacturer could invalidate or even make this dangerous. Validate assumptions on your own system and proceed with caution. 
+This is an adversarial interop against a hardware interface. Any changes from the manufacturer could invalidate or even make this dangerous. Validate assumptions on your own system and proceed with caution. 
 
 ## Usage
 The UART driver for ESP Home should work without modification. Everything else will need to be customized to your setup using the provided examples.
